@@ -43,6 +43,14 @@ jobs:
           cmake --build . --config MinSizeRel --target aseprite
       - name: Install OpenSSL
         run: choco install openssl --no-progress -y
+
+      - name: List OpenSSL DLLs
+        run: Get-ChildItem "C:/Program Files/OpenSSL*/bin/" -Filter "libcrypto*.dll" -Recurse
+
+
+
+
+
       
       - name: Copy libcrypto DLL to bin
         run: |
