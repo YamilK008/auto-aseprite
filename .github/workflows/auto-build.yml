@@ -53,8 +53,19 @@ jobs:
 
       
       - name: Copy libcrypto DLL to bin
+        shell: powershell
         run: |
-          copy "C:/Program Files/OpenSSL-Win64/bin/libcrypto-3-x64.dll" ./bin
+          New-Item -ItemType Directory -Force -Path ./bin
+          $dll = Get-ChildItem 'C:\Program Files\OpenSSL*' -Filter 'libcrypto*.dll' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $dll) {
+            Write-Host "libcrypto DLL not found under C:\Program Files\OpenSSL*"
+            exit 1
+          }
+          Copy-Item $dll.FullName -Destination ./bin
+          Write-Host "Copied $($dll.FullName) -> ./bin"
+
+
+
 
       - name: Get version
         id: get_version
