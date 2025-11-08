@@ -1,0 +1,51 @@
+name: Test OpenSSL install and DLL copy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-openssl:
+    name: Download + Install OpenSSL + Copy DLL
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+        shell: powershell
+
+      - name: Download Aseprite (only needed if download.py creates version.txt)
+        run: python download.py
+        shell: powershell
+
+      - name: Install OpenSSL
+        run: choco install openssl --no-progress -y
+        shell: powershell
+
+      - name: Show OpenSSL bin contents (debug)
+        run: |
+          Get-ChildItem 'C:\Program Files\OpenSSL*' -Filter 'libcrypto*.dll' -Recurse -ErrorAction SilentlyContinue | Select-Object FullName, Length
+        shell: powershell
+
+      - name: Ensure ./bin exists
+        run: New-Item -ItemType Directory -Force -Path ./bin
+        shell: powershell
+
+      - name: Copy libcrypto DLL to bin (robust)
+        run: |
+          $dll = Get-ChildItem 'C:\Program Files\OpenSSL*' -Filter 'libcrypto*.dll' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $dll) {
+            Write-Host "libcrypto DLL not found under C:\Program Files\OpenSSL*"
+            exit 1
+          }
+          Copy-Item $dll.FullName -Destination ./bin
+          Write-Host "Copied $($dll.FullName) -> ./bin"
+        shell: powershell
+
+      - name: List ./bin to confirm
+        run: Get-ChildItem ./bin | Select-Object Name, Length
+        shell: powershell
